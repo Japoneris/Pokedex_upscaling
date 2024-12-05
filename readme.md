@@ -14,19 +14,21 @@ Pokedex images can be downloaded [here](https://www.pokebip.com/download/pokedex
 
 ### Inference Process
 
-1. You have an image of size `a x b`.
-2. You upscale it as `a*f x b*f`. This one is blurry
+1. You have an image of size `a x b`
+2. You upscale it as `a*f x b*f`. This one is blurry. `f` can be an integer (`2`) or a floating value (reco.: `1.5`, 1.75`)
 3. You feed the blurry image to the network
-4. The network output a denoised image
+4. The network outputs a denoised image
 
 ### Training Process 
 
 1. Take your images (this is the `Y`)
-2. Downscale them
+2. Downscale the images
 3. Rescale them to the original size (they are blurry, this is your `X`)
 4. Train the network to learn `X -> Y`
 
-*Note*: Here, we upscale images **without** using **high resolution images**. 
+*Note*: Here, the network learns to upscale images **without** having access to **high resolution images**. 
+
+ 
 
 
 ## Example
