@@ -4,6 +4,11 @@ import cv2
 import numpy as np
 
 def load_single_image(filename):
+    """Load image from path
+
+    If PNG with alpha layer, alpha is replaced by white background.
+    :rparma: image scaled in [0, 1] 
+    """
     
     img = cv2.imread(filename, cv2.IMREAD_UNCHANGED).astype(np.float32)
     if img.shape[2] == 3:
@@ -40,13 +45,6 @@ def load_images_from_path(path):
     return lst
     
 
-def get_random_patch(img, patch_size=50):
-    """(Not used)
-    """
-    s0, s1 = img.shape[:2]
-    i = np.random.randint(s0 - patch_size)
-    j = np.random.randint(s1 - patch_size)
-    return img[i:i+patch_size, j:j+patch_size]
 
 def downscale_images(lst_img, f=2, version="v1"):
     lst = []
@@ -208,11 +206,3 @@ def data_augmentation_using_color(lst_img):
     
     return lst
 
-def get_model_decay(model):
-    """
-    The convolutional model will "eat" the borders.
-    Compute the total delta
-    """
-    s0 = model.inputs[0].shape[1]
-    s1 = model.outputs[0].shape[1]
-    return s0 - s1

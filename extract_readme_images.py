@@ -1,7 +1,16 @@
 """
 Script to automatically generate readme images.
 
-TODO
+Test several scale factors.
+
+1 loop:
+Scale -> Enhance(NN) 
+
+2 loops:
+Scale -> Enhance -> Scale -> Enhance
+
+Sometimes, better results when enhancing twice the last time:
+[Scale -> Enhance] * k -> Scale -> Enhance -> Enhance
 """
 
 import argparse
@@ -26,12 +35,12 @@ if __name__ == "__main__":
     
     model = tf.keras.models.load_model(args.network)
     model.summary()
-    px = tl.get_model_decay(model)
-    px2 = px//2
+    crop_px = model.decay
+    px2 = crop_px//2
 
     img = cv2.imread(args.image)
     img = img.astype(float)/255
-    border_color = float(img[:3].mean())
+    border_color = float(img[:4].mean()) # Take the first four rows to estimate color
     
     # Save the raw image to compare easily
     poke_ID = args.image.rsplit("/", 1)[-1][:-4]
@@ -41,32 +50,35 @@ if __name__ == "__main__":
     
 
     loop = 6 # Max number
-    for scale in [1.25, 1.5, 1.75, 2]:
+    for scale in [1.5, 1.75, 2]:
         print("=== Scale factor: {} ===".format(scale))
         imgz = img.copy()
         for lid in range(loop):
             print("\tloop {}".format(lid))
-            imgz = cv2.copyMakeBorder(imgz, px2, px2, px2, px2, cv2.BORDER_CONSTANT, None, [border_color] * 3)
+            if px2 != 0:
+                imgz = cv2.copyMakeBorder(imgz, px2, px2, px2, px2, cv2.BORDER_CONSTANT, None, [border_color] * 3)
     
             s0, s1, _ = imgz.shape
             s00, s11 = int(s0 * scale), int(s1 * scale)
             imgx = cv2.resize(imgz, (s11, s00))
             print("\t\tInit size:  {} \tx {}".format(s0, s1))
             print("\t\tFinal size: {} \tx {}".format(s00, s11))
-            if s00 > 2000:
+            if max(s00, s11) > 2000:
                 print("\tSTOP: image too large to be processed")
                 break
 
-            cv2.imwrite(os.path.join(save_folder, "F{}_L{}_raw.png".format(scale, lid+1)), tl.img_1_to_255(imgx))
+            cv2.imwrite(os.path.join(save_folder, "F{}_L{}_ref.png".format(scale, lid+1)), tl.img_1_to_255(imgx))
             imgz = model(imgx[np.newaxis]).numpy()[0].clip(0, 1)
     
-            cv2.imwrite(os.path.join(save_folder, "F{}_L{}_clean.png".format(scale, lid+1)), tl.img_1_to_255(imgz))
+            cv2.imwrite(os.path.join(save_folder, "F{}_L{}_ref_e1.png".format(scale, lid+1)), tl.img_1_to_255(imgz))
 
             # Final pass to sharpen
-            imgz1 = cv2.copyMakeBorder(imgz, px2, px2, px2, px2, cv2.BORDER_CONSTANT, None, [border_color] * 3)
-            imgz1 = model(imgz1[np.newaxis]).numpy()[0].clip(0, 1)
-            cv2.imwrite(os.path.join(save_folder, "F{}_L{}_fine.png".format(scale, lid+1)), tl.img_1_to_255(imgz1))
-            if s00 > 1000:
+            if px2 != 0:
+                imgz = cv2.copyMakeBorder(imgz, px2, px2, px2, px2, cv2.BORDER_CONSTANT, None, [border_color] * 3)
+            
+            imgz1 = model(imgz[np.newaxis]).numpy()[0].clip(0, 1)
+            cv2.imwrite(os.path.join(save_folder, "F{}_L{}_ref_e2.png".format(scale, lid+1)), tl.img_1_to_255(imgz1))
+            if max(s11, s00) > 1000:
                 print("\tSTOP: too large")
                 break
 

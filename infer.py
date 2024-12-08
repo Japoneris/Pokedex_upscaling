@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser.add_argument("network", type=str, help="Neural network path")
     parser.add_argument("image", type=str, help="Image to upscale")
     parser.add_argument("--scale", type=float, default=2., help="Scale factor")
-    parser.add_argument("--loop", type=int, default=1., help="Number of scale loop")
+    parser.add_argument("--loop", type=int, default=1, help="Number of scale loop")
     parser.add_argument("--save_path", type=str, default="img/upscaled/", help="Save location")
     args = parser.parse_args()
 
@@ -52,7 +52,6 @@ if __name__ == "__main__":
     
     imgz = tl.img_1_to_255(imgz)
     
-    # TODO: If PNG, maybe gather the mask ?
     basename = args.image.rsplit(".", 1)[0].rsplit("/", 1)[-1]
     filename = args.save_path + "{}_f_{}_loop_{}.jpg".format(basename, args.scale, args.loop)
     print("Upscaled image saved at {}".format(filename))
